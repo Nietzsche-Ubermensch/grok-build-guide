@@ -139,6 +139,53 @@ env = { GITHUB_PERSONAL_ACCESS_TOKEN = "${GITHUB_PAT}" }
 
 ---
 
+## Installing the mcp-list Skill
+
+The **mcp-list skill** turns Grok into an interactive MCP installer. Instead of searching for package names, just ask Grok which server you need and it will give you the exact `grok mcp add` command.
+
+### Step 1: Create the Skill Folder
+
+```bash
+mkdir -p ~/.grok/skills/mcp-list
+```
+
+### Step 2: Create the SKILL.md File
+
+Copy the canonical skill file from this repository:
+
+```bash
+cp examples/skills/mcp-list/SKILL.md ~/.grok/skills/mcp-list/SKILL.md
+```
+
+Or create it manually — the full file content is at
+[examples/skills/mcp-list/SKILL.md](../examples/skills/mcp-list/SKILL.md).
+
+### Step 3: Reload Skills
+
+Inside Grok, run:
+
+```
+/mcps
+```
+
+Grok re-reads the skills directory on each session start. If Grok is already running, start a new session to pick up the new skill.
+
+### Using the Skill
+
+Once installed, you can ask Grok things like:
+
+```
+Which MCP should I use for web scraping?
+Give me the install command for the PostgreSQL MCP server.
+What MCPs are available for Slack?
+```
+
+Grok will consult the skill's server table and return the exact `grok mcp add` command.
+
+> **Tip:** The skill works best on WSL (Windows Subsystem for Linux) where `npx` is reliably available. On native Windows, ensure Node.js is on your PATH.
+
+---
+
 ## Next Steps
 
 - [GitHub MCP Server Setup](../mcp-servers/github-mcp-setup.md) — add and authenticate the GitHub server
