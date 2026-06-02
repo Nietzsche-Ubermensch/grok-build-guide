@@ -1,43 +1,45 @@
-# Responses API Guide
+# Responses API — Enterprise Setup
 
-The Responses API is the recommended way to interact with Grok models via the xAI API. It offers stateful conversations, better support for reasoning models, and easier chaining compared to the legacy Chat Completions API.
+The Responses API is the recommended way to interact with Grok models via the xAI API. This guide covers enterprise configuration: authentication, data residency, CI/CD integration, compliance controls, error handling, and lifecycle management.
 
 ---
 
-## Why Use the Responses API?
+## API Capabilities at a Glance
 
-| Feature | Detail |
+| Capability | Detail |
 |---|---|
-| **Stateful by default** | Previous messages, reasoning traces, and responses are stored on xAI's servers for 30 days |
-| **Efficient chaining** | Continue conversations by sending only new messages + the previous `response_id` |
-| **Reasoning model support** | Excellent support for encrypted thinking content |
-| **Simpler multi-turn** | Cleaner handling of long-running or multi-turn interactions |
-
-> If you prefer full local control, set `store: false`.
+| **Stateful conversations** | Messages, reasoning traces, and responses stored on xAI servers for 30 days |
+| **Conversation chaining** | Reference a previous `response_id` to continue without resending full history |
+| **Encrypted reasoning** | Retrieve and forward a reasoning model's thinking state across turns |
+| **Storage opt-out** | Set `store: false` to keep all data client-side only |
 
 ---
 
-## 1. Creating a Response (Basic Example)
+## Authentication
 
-### Python (xAI SDK — Recommended)
+### API Key Management
+
+Never hardcode API keys. Supply them via environment variables.
+
+```bash
+# Shell profile or secrets manager export
+export XAI_API_KEY="xai-..."
+```
+
+For team environments, inject the key through your secrets manager (e.g. AWS Secrets Manager, HashiCorp Vault, GitHub Actions secrets) rather than storing it in any config file committed to version control.
+
+### SDK Initialisation
+
+**xAI SDK:**
 
 ```python
 from xai_sdk import Client
-from xai_sdk.chat import system, user
 import os
 
 client = Client(api_key=os.getenv("XAI_API_KEY"))
-
-chat = client.chat.create(model="grok-4.3")
-chat.append(system("You are a helpful AI assistant."))
-chat.append(user("How big is the universe?"))
-
-response = chat.sample()
-print(response)
-print("Response ID:", response.id)   # Use this to continue later
 ```
 
-### Python (OpenAI SDK compatible)
+**OpenAI-compatible SDK:**
 
 ```python
 from openai import OpenAI
@@ -45,115 +47,153 @@ import os
 
 client = OpenAI(
     api_key=os.getenv("XAI_API_KEY"),
-    base_url="https://api.x.ai/v1"
+    base_url="https://api.x.ai/v1",
+    timeout=3600,        # Required for long-running reasoning model requests
+    max_retries=3,
 )
-
-response = client.responses.create(
-    model="grok-4.3",
-    input=[
-        {"role": "system", "content": "You are a helpful AI assistant."},
-        {"role": "user", "content": "How big is the universe?"}
-    ]
-)
-print(response)
-print("Response ID:", response.id)
 ```
 
 ---
 
-## 2. Disable Server-Side Storage (`store: false`)
+## Data Residency & Compliance
 
-If you don't want xAI to store your conversation:
+### Disable Server-Side Storage
+
+For any workload subject to data protection requirements (GDPR, HIPAA, SOC 2, internal data classification policies), set `store: false` on every request. This ensures no conversation data is written to xAI infrastructure.
 
 ```python
 response = client.responses.create(
     model="grok-4.3",
     input=[...],
-    store=False          # ← Conversation is not stored on server
+    store=False,
 )
 ```
 
-Use this for:
+Apply this by default in your enterprise wrapper/service layer so individual callers cannot accidentally omit it.
 
-- Privacy-sensitive applications
-- Compliance requirements
-- Short-lived or one-off requests
+### Response Lifecycle Management
+
+When `store` is not disabled, responses are retained for 30 days. For compliance-driven retention controls:
+
+- **Retrieve** a stored response to log or archive it internally before deletion.
+- **Delete** responses immediately after use when your policy requires shorter retention.
+
+```python
+# Archive internally, then delete from xAI servers
+response = client.responses.retrieve("resp_...")
+internal_audit_log.write(response)
+client.responses.delete("resp_...")
+```
 
 ---
 
-## 3. Encrypted Reasoning Content (Reasoning Models)
+## Model & Timeout Configuration
 
-For reasoning models (grok-4.3, etc.), you can retrieve the model's internal thinking process in encrypted form.
+Pin the model version in all production and CI workloads to prevent uncontrolled upgrades:
 
 ```python
-response = client.responses.create(
-    model="grok-4.3",
-    input=[...],
-    include=["reasoning.encrypted_content"]
+MODEL = "grok-4.3"   # Pin; review change log before updating
+TIMEOUT = 3600       # Reasoning models can take significant time
+```
+
+Set timeouts at the SDK level (as shown in initialisation above), not per-request, so they apply uniformly across your service.
+
+---
+
+## Stateful Conversation Chaining
+
+Use `previous_response_id` for multi-turn workflows. This sends only the new message — the API retrieves prior context from the stored response — significantly reducing token usage in long sessions.
+
+```python
+first_response = client.responses.create(
+    model=MODEL,
+    input=[{"role": "user", "content": "..."}],
+)
+
+follow_up = client.responses.create(
+    model=MODEL,
+    previous_response_id=first_response.id,
+    input=[{"role": "user", "content": "..."}],
 )
 ```
 
-You can then pass this encrypted content in future requests to continue the reasoning chain without losing context.
+Store `response_id` values in your session state (database, cache) so they survive process restarts and can be resumed across service instances.
 
 ---
 
-## 4. Chaining Conversations (Stateful)
+## Encrypted Reasoning Content
 
-This is one of the biggest advantages of the Responses API — you only send new messages and the API handles the rest.
+When using reasoning models in multi-turn pipelines, request encrypted reasoning content and forward it on subsequent turns to preserve the model's reasoning chain without re-running it.
 
 ```python
-# First response
 first = client.responses.create(
-    model="grok-4.3",
-    input=[{"role": "user", "content": "How big is the universe?"}]
+    model=MODEL,
+    input=[...],
+    include=["reasoning.encrypted_content"],
 )
 
-# Continue the conversation
+# Pass encrypted content forward to continue the reasoning chain
 second = client.responses.create(
-    model="grok-4.3",
+    model=MODEL,
     previous_response_id=first.id,
-    input=[{"role": "user", "content": "How do stars form?"}]
+    input=[...],
+    include=["reasoning.encrypted_content"],
 )
 ```
 
+The encrypted content is opaque to your application — only the xAI API can interpret it. Do not log or store it beyond what is needed to forward it.
+
 ---
 
-## 5. Retrieving & Deleting Responses
+## CI/CD Integration
+
+For automated pipelines, use a stateless pattern: `store: false`, no `previous_response_id`, explicit timeout, and structured error handling.
 
 ```python
-# Retrieve a previous response
-response = client.responses.retrieve("resp_abc123")
+import os
+from openai import OpenAI, APIError, APITimeoutError
 
-# Delete a stored response
-client.responses.delete("resp_abc123")
+client = OpenAI(
+    api_key=os.getenv("XAI_API_KEY"),
+    base_url="https://api.x.ai/v1",
+    timeout=3600,
+    max_retries=3,
+)
+
+def call_grok(prompt: str) -> str:
+    try:
+        response = client.responses.create(
+            model="grok-4.3",
+            input=[{"role": "user", "content": prompt}],
+            store=False,
+        )
+        return response.output_text
+    except APITimeoutError:
+        raise RuntimeError("xAI API timed out — consider increasing TIMEOUT or splitting the request")
+    except APIError as e:
+        raise RuntimeError(f"xAI API error {e.status_code}: {e.message}")
 ```
 
+Set `XAI_API_KEY` as a CI secret (GitHub Actions, GitLab CI, etc.) and never pass it as a CLI argument or log it.
+
 ---
 
-## Best Practices
+## Enterprise Configuration Checklist
 
-| Use Case | Recommendation | Why |
+| Control | Setting | Notes |
 |---|---|---|
-| Long multi-turn conversations | Use Responses API + `previous_response_id` | Much more efficient |
-| Reasoning models | Always include `reasoning.encrypted_content` when needed | Better performance & continuity |
-| Privacy / Compliance | Set `store: false` | Data not stored on xAI servers |
-| CI/CD / Automation | Use API key + `store: false` | Stateless and clean |
-| Maximum context control | Manage history locally + `store: false` | Full control |
-| Long-running requests | Increase timeout (e.g. 3600s) | Reasoning models can take time |
-
----
-
-## Quick Recommendation Based on Your Setup
-
-For headless scripting and enterprise environments:
-
-- Use Responses API with `store: false` for most automation.
-- Use `previous_response_id` when you need multi-turn state without sending full history.
-- For high-security environments, combine with `XAI_API_KEY` + strict sandboxing.
+| API key source | Environment variable / secrets manager | Never in code or config files |
+| Storage | `store=False` for regulated data | Apply in service wrapper layer |
+| Model version | Pinned (e.g. `grok-4.3`) | Review changelog before upgrading |
+| Timeout | `3600s` at SDK level | Reasoning models require long timeouts |
+| Retries | `max_retries=3` | Built-in exponential backoff |
+| Response deletion | Delete after internal archival | For sub-30-day retention requirements |
+| Reasoning content | Do not persist encrypted blobs | Forward only; treat as ephemeral |
+| CI secrets | Injected via secrets manager | Never logged or printed |
 
 ---
 
 ## Next Steps
 
-- [Cost Optimization & Enterprise Tips](cost-optimization.md) — keep token usage and costs under control
+- [Cost Optimization & Enterprise Tips](cost-optimization.md) — token budgets, audit logging, centralized config
 - [MCP List Best Practices](mcp-list-best-practices.md) — manage MCP server overhead
