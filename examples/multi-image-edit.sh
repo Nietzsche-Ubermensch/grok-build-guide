@@ -55,7 +55,7 @@ PAYLOAD=$(build_payload "$PROMPT" "${IMAGES[@]}")
 
 RESPONSE=$(curl -sS \
   -X POST "https://api.x.ai/v1/images/edits" \
-  -H "Authorization: ******" \
+  -H "Authorization: Bearer ${XAI_API_KEY}" \
   -H "Content-Type: application/json" \
   -d "$PAYLOAD")
 

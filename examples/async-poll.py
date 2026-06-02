@@ -12,7 +12,7 @@ import time
 import httpx
 
 API_KEY = os.environ["XAI_API_KEY"]
-HEADERS = {"Authorization": f"******", "Content-Type": "application/json"}
+HEADERS = {"Authorization": "Bearer " + API_KEY, "Content-Type": "application/json"}
 BASE_URL = "https://api.x.ai/v1"
 
 

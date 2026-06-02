@@ -29,7 +29,7 @@ import httpx, os
 
 response = httpx.post(
     "https://api.x.ai/v1/images/generations",
-    headers={"Authorization": f"******'XAI_API_KEY']}"},
+    headers={"Authorization": "Bearer " + os.environ["XAI_API_KEY"]},
     json={
         "model": "grok-2-image",
         "prompt": "A futuristic city skyline at sunset, photorealistic",
@@ -56,7 +56,7 @@ def encode(path: str) -> str:
 
 response = httpx.post(
     "https://api.x.ai/v1/images/edits",
-    headers={"Authorization": f"******'XAI_API_KEY']}"},
+    headers={"Authorization": "Bearer " + os.environ["XAI_API_KEY"]},
     json={
         "model": "grok-2-image",
         "prompt": "Add a sunset glow to each image",
@@ -96,7 +96,7 @@ import httpx, os
 
 response = httpx.post(
     "https://api.x.ai/v1/video/generations",
-    headers={"Authorization": f"******'XAI_API_KEY']}"},
+    headers={"Authorization": "Bearer " + os.environ["XAI_API_KEY"]},
     json={
         "model": "grok-2-video",
         "prompt": "A time-lapse of clouds moving over a mountain range",
@@ -122,7 +122,7 @@ For long-running tasks (large batches, video, high-resolution images), use the a
 import httpx, os, time
 
 API_KEY = os.environ["XAI_API_KEY"]
-HEADERS = {"Authorization": f"******"}
+HEADERS = {"Authorization": "Bearer " + API_KEY}
 
 # 1. Submit the job
 submit = httpx.post(
@@ -202,7 +202,7 @@ PROMPTS = [
 ]
 
 API_KEY = os.environ["XAI_API_KEY"]
-HEADERS = {"Authorization": f"******"}
+HEADERS = {"Authorization": "Bearer " + API_KEY}
 
 # Submit all jobs
 job_ids = []
