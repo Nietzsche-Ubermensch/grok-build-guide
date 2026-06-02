@@ -139,7 +139,105 @@ env = { GITHUB_PERSONAL_ACCESS_TOKEN = "${GITHUB_PAT}" }
 
 ---
 
-## Installing the mcp-list Skill
+## Full MCP Server Catalog
+
+The [mcp-list skill](../examples/skills/mcp-list/SKILL.md) embeds a curated catalog of MCP servers across six categories. Here is the complete reference.
+
+### 1. Browser & Web Automation ⭐ Most Useful
+
+| MCP Server | Command to Add | Best For | Rating |
+|---|---|---|---|
+| **Playwright** | `grok mcp add playwright --command npx --args @playwright/mcp@latest` | Web scraping, browser automation, testing | ★★★★★ |
+| **Puppeteer** | `grok mcp add puppeteer --command npx --args @modelcontextprotocol/server-puppeteer` | Web scraping & automation | ★★★★ |
+| **Browser (Official)** | `grok mcp add browser --command npx --args @modelcontextprotocol/server-browser` | General browser control | ★★★★ |
+
+### 2. Development & Git
+
+| MCP Server | Command to Add | Best For | Rating |
+|---|---|---|---|
+| **GitHub** | `grok mcp add github --command npx --args @modelcontextprotocol/server-github` | Create PRs, issues, manage repos | ★★★★★ |
+| **Git** | `grok mcp add git --command npx --args @modelcontextprotocol/server-git` | Advanced git operations | ★★★★ |
+| **Filesystem** | `grok mcp add filesystem --command npx --args @modelcontextprotocol/server-filesystem` | Read/write files safely | ★★★★★ |
+
+### 3. Databases
+
+| MCP Server | Command to Add | Best For | Rating |
+|---|---|---|---|
+| **PostgreSQL** | `grok mcp add postgres --command npx --args @modelcontextprotocol/server-postgres` | Query Postgres databases | ★★★★★ |
+| **SQLite** | `grok mcp add sqlite --command npx --args @modelcontextprotocol/server-sqlite` | Local SQLite databases | ★★★★ |
+| **MySQL** | `grok mcp add mysql --command npx --args @modelcontextprotocol/server-mysql` | MySQL databases | ★★★ |
+
+### 4. Communication & Productivity
+
+| MCP Server | Command to Add | Best For | Rating |
+|---|---|---|---|
+| **Slack** | `grok mcp add slack --command npx --args @modelcontextprotocol/server-slack` | Send messages, read channels | ★★★★ |
+| **Linear** | `grok mcp add linear --command npx --args @modelcontextprotocol/server-linear` | Project management (issues) | ★★★★ |
+| **Notion** | `grok mcp add notion --command npx --args @modelcontextprotocol/server-notion` | Read/write Notion pages | ★★★ |
+
+### 5. Search & Data
+
+| MCP Server | Command to Add | Best For | Rating |
+|---|---|---|---|
+| **Brave Search** | `grok mcp add brave-search --command npx --args @modelcontextprotocol/server-brave-search` | Privacy-focused web search | ★★★★ |
+| **Everything** | `grok mcp add everything --command npx --args @modelcontextprotocol/server-everything` | General purpose tools | ★★★ |
+
+### 6. Other Useful MCPs
+
+| MCP Server | Use Case | Rating |
+|---|---|---|
+| **Time** | Get current time, convert timezones | ★★★ |
+| **Fetch** | Make HTTP requests | ★★★ |
+| **Memory** | Persistent memory across sessions | ★★★★ |
+| **Sequential Thinking** | Better step-by-step reasoning | ★★★★ |
+
+---
+
+## Quick Reference Commands
+
+```bash
+# Browser & scraping
+grok mcp add playwright --command npx --args @playwright/mcp@latest
+
+# GitHub
+grok mcp add github --command npx --args @modelcontextprotocol/server-github
+
+# Filesystem
+grok mcp add filesystem --command npx --args @modelcontextprotocol/server-filesystem
+
+# PostgreSQL
+grok mcp add postgres --command npx --args @modelcontextprotocol/server-postgres
+
+# Slack
+grok mcp add slack --command npx --args @modelcontextprotocol/server-slack
+
+# List all installed MCPs
+/mcps
+```
+
+You can also manage them interactively by typing `/mcps` inside any Grok session.
+
+---
+
+## Recommended Starter Pack
+
+If you are setting up Grok for the first time, these five servers cover the most common workflows:
+
+```bash
+grok mcp add playwright --command npx --args @playwright/mcp@latest
+grok mcp add github --command npx --args @modelcontextprotocol/server-github
+grok mcp add filesystem --command npx --args @modelcontextprotocol/server-filesystem
+grok mcp add postgres --command npx --args @modelcontextprotocol/server-postgres
+grok mcp add slack --command npx --args @modelcontextprotocol/server-slack
+```
+
+After running all five, confirm they are connected:
+
+```
+/mcps
+```
+
+---
 
 The **mcp-list skill** turns Grok into an interactive MCP installer. Instead of searching for package names, just ask Grok which server you need and it will give you the exact `grok mcp add` command.
 
