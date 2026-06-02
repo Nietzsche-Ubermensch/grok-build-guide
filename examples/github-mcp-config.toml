@@ -1,0 +1,12 @@
+# ~/.grok/config.toml  (global)
+# or .grok/config.toml (project-specific — add to .gitignore if token is inline)
+
+[mcpServers.github]
+command = "npx"
+args = ["@modelcontextprotocol/server-github"]
+
+# Option A: inline token (only safe for local personal config, never commit this)
+# env = { GITHUB_PERSONAL_ACCESS_TOKEN = "ghp_your_token_here" }
+
+# Option B: reference a shell environment variable (safe to commit)
+env = { GITHUB_PERSONAL_ACCESS_TOKEN = "${GITHUB_PERSONAL_ACCESS_TOKEN}" }
