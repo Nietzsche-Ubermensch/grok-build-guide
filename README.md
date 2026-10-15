@@ -18,6 +18,7 @@ grok
 |-------|-------|---------|
 | [grok-features-guide](.grok/skills/grok-features-guide/) | `/grok-features-guide` | Where skills, plugins, hooks, and marketplaces load from |
 | [strict-code-implementer](.grok/skills/strict-code-implementer/) | `/strict-code-implementer` | Full production code only — no stubs, mocks, or placeholders |
+| [mcp-roster](.grok/skills/mcp-roster/) | `/mcp-roster` | MCP server inventory. Programming languages are C and C++, not BCP 47 locales |
 
 ## Related repos
 
